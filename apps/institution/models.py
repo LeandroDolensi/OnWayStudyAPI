@@ -9,5 +9,9 @@ class Institution(models.Model):
         User, on_delete=models.CASCADE, related_name="institutions"
     )
 
+    class Meta:
+        db_table = "instituition"
+        managed = True
+
     def __str__(self):
         return self.name
