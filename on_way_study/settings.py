@@ -11,6 +11,7 @@ https://docs.djangoproject.com/en/5.2/ref/settings/
 """
 
 from pathlib import Path
+from environment import ON_WAY_STUDY_DB_USER, ON_WAY_STUDY_DB_PASSWORD, ON_WAY_STUDY_DJANGO_SECRET_KEY
 
 # Build paths inside the project like this: BASE_DIR / 'subdir'.
 BASE_DIR = Path(__file__).resolve().parent.parent
@@ -20,7 +21,7 @@ BASE_DIR = Path(__file__).resolve().parent.parent
 # See https://docs.djangoproject.com/en/5.2/howto/deployment/checklist/
 
 # SECURITY WARNING: keep the secret key used in production secret!
-SECRET_KEY = 'django-insecure-(ro5ic+x9_*c3#k6@!lh%3qbb_s&z7&&chwdw56@-v88_7u7dh'
+SECRET_KEY = ON_WAY_STUDY_DJANGO_SECRET_KEY
 
 # SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = True
@@ -74,8 +75,12 @@ WSGI_APPLICATION = 'on_way_study.wsgi.application'
 
 DATABASES = {
     'default': {
-        'ENGINE': 'django.db.backends.sqlite3',
-        'NAME': BASE_DIR / 'db.sqlite3',
+        'ENGINE': 'django.db.backends.postgresql',
+        'NAME': 'on_way_study',
+        'USER': ON_WAY_STUDY_DB_USER,
+        'PASSWORD': ON_WAY_STUDY_DB_PASSWORD,
+        'HOST': 'localhost',
+        'PORT': '5432'
     }
 }
 
