@@ -1,4 +1,4 @@
-import os 
+import os
 
 ON_WAY_STUDY_DB_USER = os.getenv("ON_WAY_STUDY_DB_USER")
 ON_WAY_STUDY_DB_PASSWORD = os.getenv("ON_WAY_STUDY_DB_PASSWORD")
