@@ -4,7 +4,7 @@ from environment import get_timezone
 
 class User(models.Model):
     nickname = models.CharField(max_length=100, unique=True)
-    senha = models.CharField(max_length=255)
+    password = models.CharField(max_length=255)
     created_at = models.DateTimeField(blank=True, default=get_timezone)
     updated_at = models.DateTimeField(blank=True, null=True)
 
