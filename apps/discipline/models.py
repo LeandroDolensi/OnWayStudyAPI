@@ -1,5 +1,6 @@
 from django.db import models
 from apps.course.models import Course
+from environment import get_timezone
 
 
 class Discipline(models.Model):
@@ -8,6 +9,8 @@ class Discipline(models.Model):
     curso = models.ForeignKey(
         Course, on_delete=models.CASCADE, related_name="disciplines"
     )
+    created_at = models.DateTimeField(blank=True, default=get_timezone)
+    updated_at = models.DateTimeField(blank=True, null=True)
 
     class Meta:
         db_table = "discipline"

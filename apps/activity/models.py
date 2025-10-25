@@ -1,5 +1,6 @@
 from django.db import models
 from apps.discipline.models import Discipline
+from environment import get_timezone
 
 
 class Activity(models.Model):
@@ -18,6 +19,8 @@ class Activity(models.Model):
     discipline = models.ForeignKey(
         Discipline, on_delete=models.CASCADE, related_name="activities"
     )
+    created_at = models.DateTimeField(blank=True, default=get_timezone)
+    updated_at = models.DateTimeField(blank=True, null=True)
 
     class Meta:
         db_table = "activity"
