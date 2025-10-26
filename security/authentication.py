@@ -20,7 +20,7 @@ class OnWayStudyBaseAuthentication(authentication.BaseAuthentication):
 
     def authenticate(self, request):
         """
-        Authenticates the request based on 'nickname' and 'password'.
+        Authenticates the request based on `nickname` and `password`.
 
         This is the main entry point called by DRF. It orchestrates
         the validation, decoding, and user verification process.
@@ -30,7 +30,7 @@ class OnWayStudyBaseAuthentication(authentication.BaseAuthentication):
 
         Returns:
             A tuple of (user, None) on successful authentication.
-            Returns None if the authentication scheme is not 'Basic'.
+            Returns None if the authentication scheme is not `Basic`.
 
         Raises:
             exceptions.AuthenticationFailed: If credentials are invalid,
@@ -51,14 +51,14 @@ class OnWayStudyBaseAuthentication(authentication.BaseAuthentication):
 
     def _validate_auth_header(self, basic_auth_header: List[str]):
         """
-        Validates the structure of the 'Authorization' header list.
+        Validates the structure of the `Authorization` header list.
 
         Checks if the header contains the expected number of parts
-        (e.g., just 'Basic' or 'Basic' with too many spaces).
+        (e.g., just `Basic` or `Basic` with too many spaces).
 
         Args:
-            basic_auth_header: The split list from the 'Authorization' header
-                               (e.g., [b'Basic', b'YWxpY2U6MTIzNA==']).
+            basic_auth_header: The split list from the `Authorization` header
+                               (e.g., [b"Basic", b"YWxpY2U6MTIzNA=="]).
 
         Raises:
             exceptions.AuthenticationFailed: If the header structure is invalid.
@@ -78,7 +78,7 @@ class OnWayStudyBaseAuthentication(authentication.BaseAuthentication):
         Decodes and extracts credentials from the Base64 token.
 
         Args:
-            basic_auth_header: The split list from the 'Authorization' header.
+            basic_auth_header: The split list from the `Authorization` header.
 
         Returns:
             A list containing the [nickname, password].
