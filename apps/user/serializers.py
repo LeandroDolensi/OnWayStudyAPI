@@ -3,6 +3,7 @@ from rest_framework import serializers
 from .models import User
 from django.contrib.auth.hashers import make_password
 from typing import List, Dict
+from environment import get_timezone
 
 
 class UserSerializer(serializers.ModelSerializer):
@@ -27,6 +28,8 @@ class UserSerializer(serializers.ModelSerializer):
     def update(self, instance, validated_data):
         if "password" in validated_data:
             validated_data["password"] = make_password(validated_data.get("password"))
+
+        validated_data["updated_at"] = get_timezone()
 
         return super().update(instance, validated_data)
 
