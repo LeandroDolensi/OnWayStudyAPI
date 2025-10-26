@@ -29,6 +29,9 @@ class UserSerializer(serializers.ModelSerializer):
         if "password" in validated_data:
             validated_data["password"] = make_password(validated_data.get("password"))
 
+        if "nickname" in validated_data:
+            self._validate_nickname(validated_data)
+
         validated_data["updated_at"] = get_timezone()
 
         return super().update(instance, validated_data)
@@ -66,9 +69,16 @@ class UserSerializer(serializers.ModelSerializer):
             validated_data: The dictionary of validated data from the serializer.
 
         Raises:
-            serializers.ValidationError: If the nickname already exists.
+            serializers.ValidationError: If the nickname already exists or is empty.
         """
         nickname = validated_data.get("nickname")
+
+        if not nickname:
+            raise serializers.ValidationError(
+                {
+                    "nickname": "The field 'nickname cannot by empty.",
+                }
+            )
 
         if User.objects.filter(nickname=nickname).exists():
             raise serializers.ValidationError(
