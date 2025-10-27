@@ -17,4 +17,7 @@ class IsOwner(permissions.BasePermission):
         Returns:
             _type_: True if the user owns the object. False otherwise.
         """
+        if hasattr(obj, "user"):
+            return obj.user == request.user
+
         return obj == request.user

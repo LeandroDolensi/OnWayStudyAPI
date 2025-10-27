@@ -4,6 +4,7 @@ from rest_framework import authentication
 from rest_framework import exceptions
 from apps.user.models import User
 from typing import List
+from rest_framework.request import HttpRequest
 
 
 class OnWayStudyBaseAuthentication(authentication.BaseAuthentication):
@@ -18,7 +19,7 @@ class OnWayStudyBaseAuthentication(authentication.BaseAuthentication):
     the standard `username`.
     """
 
-    def authenticate(self, request):
+    def authenticate(self, request: HttpRequest):
         """
         Authenticates the request based on `nickname` and `password`.
 
@@ -38,7 +39,7 @@ class OnWayStudyBaseAuthentication(authentication.BaseAuthentication):
         """
         basic_auth_header = authentication.get_authorization_header(request).split()
 
-        if not basic_auth_header or basic_auth_header[0].lower() != b"basic":
+        if not self._is_authenticated(basic_auth_header, request):
             return None
 
         self._validate_auth_header(basic_auth_header)
@@ -48,6 +49,49 @@ class OnWayStudyBaseAuthentication(authentication.BaseAuthentication):
         self._check_password(password, user)
 
         return (user, None)
+
+    def _is_authenticated(
+        self, basic_auth_header: List[str], request: HttpRequest
+    ) -> bool:
+        """
+        Checks if a user is authenticated using Basic Authentication standards.
+        The only exception to this rule is the operation to create a new user.
+
+        Args:
+            basic_auth_header (List[str]): The split list from the `Authorization` header
+                               (e.g., [b"Basic", b"YWxpY2U6MTIzNA=="]).
+            request (HttpRequest): The HttpRequest object
+
+        Raises:
+            exceptions.NotAuthenticated: if is not operation to create a new user
+
+        Returns:
+            bool: True if has Basic Authentication, otherwise False
+        """
+        if basic_auth_header and basic_auth_header[0].lower() == b"basic":
+            return True
+
+        if not self._is_create_user_method(request):
+            raise exceptions.NotAuthenticated(
+                """Clients must provide an 'Authorization' header in the format:
+                'Basic <base64_encoded_nickname:password>'"""
+            )
+
+        return False
+
+    def _is_create_user_method(self, request: HttpRequest) -> bool:
+        """Check if the request method and path correspond to the operation of creating a new user.
+
+        Args:
+            request (HttpRequest): The HttpRequest object
+
+        Returns:
+            bool: True if is the operation to create a new user, otherwise False
+        """
+        if request.method == "POST" and request.path.endswith("/users/"):
+            return True
+
+        return False
 
     def _validate_auth_header(self, basic_auth_header: List[str]):
         """

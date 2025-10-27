@@ -72,6 +72,12 @@ CORS_ALLOW_HEADERS = [
     "X-On-Way-Study-API-Signature",
 ]
 
+REST_FRAMEWORK = {
+    "DEFAULT_PERMISSION_CLASSES": [
+        "security.permissions.IsOwner",
+    ]
+}
+
 
 ROOT_URLCONF = "on_way_study.urls"
 
