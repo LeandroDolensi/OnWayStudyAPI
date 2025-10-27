@@ -5,7 +5,6 @@ from environment import get_timezone
 
 class Institution(models.Model):
     name = models.CharField(max_length=200)
-    date = models.DateField(auto_now_add=True)
     user = models.ForeignKey(
         User, on_delete=models.CASCADE, related_name="institutions"
     )
@@ -13,7 +12,7 @@ class Institution(models.Model):
     updated_at = models.DateTimeField(blank=True, null=True)
 
     class Meta:
-        db_table = "instituition"
+        db_table = "institution"
         managed = True
 
     def __str__(self):
