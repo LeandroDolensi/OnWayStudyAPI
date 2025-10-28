@@ -154,7 +154,9 @@ class OnWayStudyBaseAuthentication(authentication.BaseAuthentication):
         try:
             return User.objects.get(nickname=nickname)
         except User.DoesNotExist:
-            raise exceptions.AuthenticationFailed(f"User '{nickname}' not found.")
+            raise exceptions.AuthenticationFailed(
+                f"The basic authenticate user nickname '{nickname}' was not found."
+            )
 
     def _check_password(self, password: str, user: User):
         """
