@@ -1,6 +1,7 @@
 from rest_framework.serializers import ModelSerializer
 from apps.institution.models import Institution
-from rest_framework.exceptions import NotAuthenticated
+from rest_framework.exceptions import NotAuthenticated, ValidationError
+from django.db import IntegrityError
 from environment import get_timezone
 from apps.user.models import User
 
@@ -19,7 +20,12 @@ class InstitutionSerializer(ModelSerializer):
     def create(self, validated_data):
         validated_data["user"] = self._get_user()
 
-        return super().create(validated_data)
+        try:
+            return super().create(validated_data)
+        except IntegrityError:
+            raise ValidationError(
+                f"The Institution name {validated_data.get("name", "")} alread exist."
+            )
 
     def update(self, instance, validated_data):
         validated_data.pop("user", None)

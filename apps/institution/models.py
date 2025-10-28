@@ -14,6 +14,11 @@ class Institution(models.Model):
     class Meta:
         db_table = "institution"
         managed = True
+        constraints = [
+            models.UniqueConstraint(
+                fields=["name", "user"], name="unique_institution_user_name"
+            )
+        ]
 
     def __str__(self):
         return self.name
