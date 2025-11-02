@@ -29,7 +29,10 @@ class UserSerializer(serializers.ModelSerializer):
         if "password" in validated_data:
             validated_data["password"] = make_password(validated_data.get("password"))
 
-        if "nickname" in validated_data:
+        if (
+            "nickname" in validated_data
+            and validated_data["nickname"] != instance.nickname
+        ):
             self._validate_nickname(validated_data)
 
         validated_data["updated_at"] = get_timezone()
