@@ -18,7 +18,8 @@ class Course(models.Model):
         managed = True
         constraints = [
             models.UniqueConstraint(
-                fields=["name", "institution"], name="unique_course_institution"
+                fields=["name", "acronym", "institution"],
+                name="unique_course_institution",
             )
         ]
 
