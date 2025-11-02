@@ -7,7 +7,7 @@ class Course(models.Model):
     name = models.CharField(max_length=200)
     acronym = models.CharField(max_length=10)
     semesters = models.PositiveIntegerField()
-    instituition = models.ForeignKey(
+    institution = models.ForeignKey(
         Institution, on_delete=models.CASCADE, related_name="courses"
     )
     created_at = models.DateTimeField(blank=True, default=get_timezone)
@@ -18,7 +18,7 @@ class Course(models.Model):
         managed = True
         constraints = [
             models.UniqueConstraint(
-                fields=["name", "instituition"], name="unique_course_institution"
+                fields=["name", "institution"], name="unique_course_institution"
             )
         ]
 
