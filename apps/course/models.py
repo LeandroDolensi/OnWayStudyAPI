@@ -16,6 +16,11 @@ class Course(models.Model):
     class Meta:
         db_table = "course"
         managed = True
+        constraints = [
+            models.UniqueConstraint(
+                fields=["name", "instituition"], name="unique_course_institution"
+            )
+        ]
 
     def __str__(self):
         return f"{self.name} ({self.acronym})"
