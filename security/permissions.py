@@ -1,5 +1,7 @@
 from rest_framework import permissions
 
+from django_libs.custom_model import PermissionBaseModel
+
 
 class IsOwner(permissions.BasePermission):
     """
@@ -17,7 +19,11 @@ class IsOwner(permissions.BasePermission):
         Returns:
             _type_: True if the user owns the object. False otherwise.
         """
-        if hasattr(obj, "user"):
-            return obj.user == request.user
-
+        obj = self.get_obj_user(obj)
         return obj == request.user
+
+    def get_obj_user(self, obj: PermissionBaseModel):
+        if hasattr(obj, obj.linked_to):
+            obj = self.get_obj_user(getattr(obj, obj.linked_to))
+
+        return obj
