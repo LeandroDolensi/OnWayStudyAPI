@@ -18,6 +18,11 @@ class Discipline(models.Model, PermissionBaseModel):
     class Meta:
         db_table = "discipline"
         managed = True
+        constraints = [
+            models.UniqueConstraint(
+                fields=["name", "course"], name="unique_discipline_name"
+            )
+        ]
 
     def __str__(self):
-        return self.name
+        return f"{self.course.acronym}: {self.name}"

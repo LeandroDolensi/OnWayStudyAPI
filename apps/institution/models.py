@@ -19,7 +19,7 @@ class Institution(models.Model, PermissionBaseModel):
         managed = True
         constraints = [
             models.UniqueConstraint(
-                fields=["name", "user"], name="unique_institution_user_name"
+                fields=["name", "user"], name="unique_institution_name"
             )
         ]
 

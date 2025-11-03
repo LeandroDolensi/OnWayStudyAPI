@@ -21,8 +21,8 @@ class Course(models.Model, PermissionBaseModel):
         managed = True
         constraints = [
             models.UniqueConstraint(
-                fields=["name", "acronym", "institution"],
-                name="unique_course_institution",
+                fields=["name", "institution"],
+                name="unique_course_name",
             )
         ]
 
