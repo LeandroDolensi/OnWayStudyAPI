@@ -15,8 +15,11 @@ class Activity(models.Model, PermissionBaseModel):
         max_length=20, choices=StatusChoices.choices, default=StatusChoices.PENDING
     )
     weight = models.DecimalField(max_digits=5, decimal_places=2, null=True, blank=True)
+    expected_result = models.DecimalField(
+        max_digits=5, decimal_places=2, null=True, blank=True
+    )
     result = models.DecimalField(max_digits=5, decimal_places=2, null=True, blank=True)
-    date = models.DateTimeField(auto_now_add=True)
+    date = models.DateTimeField()
     discipline = models.ForeignKey(
         Discipline, on_delete=models.CASCADE, related_name="activities"
     )
