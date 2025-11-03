@@ -33,4 +33,4 @@ class Activity(models.Model, PermissionBaseModel):
         managed = True
 
     def __str__(self):
-        return self.name
+        return f"{self.discipline.name}: {self.name}"
