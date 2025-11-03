@@ -1,9 +1,10 @@
 from django.db import models
 from apps.discipline.models import Discipline
+from django_libs.custom_model import PermissionBaseModel
 from environment import get_timezone
 
 
-class Activity(models.Model):
+class Activity(models.Model, PermissionBaseModel):
     class StatusChoices(models.TextChoices):
         PENDING = "PENDING", "Pending"
         IN_PROGRESS = "IN_PROGRESS", "In Progress"
@@ -21,6 +22,8 @@ class Activity(models.Model):
     )
     created_at = models.DateTimeField(blank=True, default=get_timezone)
     updated_at = models.DateTimeField(blank=True, null=True)
+
+    linked_to = "discipline"
 
     class Meta:
         db_table = "activity"

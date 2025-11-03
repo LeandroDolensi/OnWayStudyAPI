@@ -1,8 +1,9 @@
 from django.db import models
+from django_libs.custom_model import PermissionBaseModel
 from environment import get_timezone
 
 
-class User(models.Model):
+class User(models.Model, PermissionBaseModel):
     nickname = models.CharField(max_length=100, unique=True)
     password = models.CharField(max_length=255)
     created_at = models.DateTimeField(blank=True, default=get_timezone)
