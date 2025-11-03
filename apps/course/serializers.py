@@ -5,9 +5,7 @@ from apps.course.models import Course
 
 
 class CourseSerializer(CustomModelSerializer):
-    institution = SlugRelatedField(
-        slug_field="name", queryset=Institution.objects.all()
-    )
+    institution = SlugRelatedField(slug_field="id", queryset=Institution.objects.all())
 
     class Meta:
         model = Course
