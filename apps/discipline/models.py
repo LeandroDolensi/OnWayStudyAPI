@@ -5,8 +5,19 @@ from environment import get_timezone
 
 
 class Discipline(models.Model, PermissionBaseModel):
+    class FinalStatusChoices(models.TextChoices):
+        FAILED = "FAILED", "Failed"
+        RECOVERY = "RECOVERY", "Recovery"
+        APPROVED = "APPROVED", "Approved"
+
     name = models.CharField(max_length=200)
     extra_information = models.TextField(blank=True, null=True)
+    final_grade = models.DecimalField(
+        max_digits=5, decimal_places=2, null=True, blank=True
+    )
+    final_result = models.CharField(
+        max_length=20, choices=FinalStatusChoices.choices, blank=True, null=True
+    )
     course = models.ForeignKey(
         Course, on_delete=models.CASCADE, related_name="disciplines"
     )
