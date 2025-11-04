@@ -13,10 +13,10 @@ class ActivitySerializer(CustomModelSerializer):
             "id",
             "name",
             "status",
-            "weight",
-            "expected_result",
-            "result",
-            "date",
+            "grade_weight",
+            "expected_grade",
+            "grade_result",
+            "delivery_date",
             "discipline",
             "created_at",
             "updated_at",
@@ -29,6 +29,15 @@ class ActivitySerializer(CustomModelSerializer):
             course__institution__user=self._get_user()
         )
 
+    def create(self, validated_data):
+        return super().create(validated_data)
+
+    def update(self, instance, validated_data):
+        return super().update(instance, validated_data)
+
+    def _calculate_expected_grade(self, validated_data):
+        pass
+
 
 class DisciplineActivitySerializer(ModelSerializer):
     class Meta:
@@ -37,10 +46,10 @@ class DisciplineActivitySerializer(ModelSerializer):
             "id",
             "name",
             "status",
-            "weight",
-            "expected_result",
-            "result",
-            "date",
+            "grade_weight",
+            "expected_grade",
+            "grade_result",
+            "delivery_date",
             "created_at",
             "updated_at",
         ]
