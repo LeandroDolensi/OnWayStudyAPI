@@ -4,6 +4,7 @@ from rest_framework.mixins import (
     RetrieveModelMixin,
     UpdateModelMixin,
     DestroyModelMixin,
+    ListModelMixin,
 )
 from apps.user.models import User
 from apps.user.serializers import UserSerializer
@@ -16,8 +17,13 @@ class UserViewSet(
     RetrieveModelMixin,
     UpdateModelMixin,
     DestroyModelMixin,
+    ListModelMixin,
 ):
     queryset = User.objects.all()
     serializer_class = UserSerializer
     lookup_field = "id"
     authentication_classes = [OnWayStudyBaseAuthentication]
+
+    def get_queryset(self):
+        self.queryset = User.objects.filter(id=self.request.user.id)
+        return super().get_queryset()
