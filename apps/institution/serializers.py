@@ -1,11 +1,14 @@
+from apps.course.serializers import InstitutionCourseSerializer
 from apps.institution.models import Institution
 from rest_framework.exceptions import ValidationError
 from django.db import IntegrityError
 from django_libs.custom_serializer import CustomModelSerializer
+from rest_framework.serializers import ModelSerializer
 from environment import get_timezone
 
 
 class InstitutionSerializer(CustomModelSerializer):
+
     class Meta:
         model = Institution
         fields = ["id", "name", "user", "created_at", "updated_at"]
@@ -31,3 +34,12 @@ class InstitutionSerializer(CustomModelSerializer):
         validated_data["updated_at"] = get_timezone()
 
         return super().update(instance, validated_data)
+
+
+class UserInstitutionSerializer(ModelSerializer):
+    courses = InstitutionCourseSerializer(many=True, read_only=True)
+
+    class Meta:
+        model = Institution
+        fields = ["id", "name", "created_at", "updated_at", "courses"]
+        read_only_fields = ["id", "name", "created_at", "updated_at", "courses"]

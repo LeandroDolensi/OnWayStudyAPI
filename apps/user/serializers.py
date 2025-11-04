@@ -1,5 +1,7 @@
 import random
 from rest_framework import serializers
+
+from apps.institution.serializers import UserInstitutionSerializer
 from .models import User
 from django.contrib.auth.hashers import make_password
 from typing import List, Dict
@@ -7,11 +9,19 @@ from environment import get_timezone
 
 
 class UserSerializer(serializers.ModelSerializer):
+    institutions = UserInstitutionSerializer(many=True, read_only=True)
 
     class Meta:
         model = User
-        fields = ["id", "nickname", "created_at", "updated_at", "password"]
-        read_only_fields = ["created_at", "updated_at"]
+        fields = [
+            "id",
+            "nickname",
+            "created_at",
+            "updated_at",
+            "password",
+            "institutions",
+        ]
+        read_only_fields = ["created_at", "updated_at", "institutions"]
         extra_kwargs = {
             "password": {"write_only": True, "style": {"input_type": "password"}},
             "nickname": {
