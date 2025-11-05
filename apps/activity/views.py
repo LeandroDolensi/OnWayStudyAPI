@@ -11,6 +11,9 @@ from apps.activity.serializers import ActivitySerializer
 from apps.course.models import Course
 from apps.discipline.models import Discipline
 from security.authentication import OnWayStudyBaseAuthentication
+from rest_framework import status
+from rest_framework.response import Response
+from apps.discipline.service import DisciplineService
 
 
 class ActivityViewSet(
@@ -36,3 +39,40 @@ class ActivityViewSet(
             discipline__in=filtered_user_disciplines
         )
         return super().get_queryset()
+
+    def create(self, request, *args, **kwargs):
+        serializer = self.get_serializer(data=request.data)
+        serializer.is_valid(raise_exception=True)
+        self.perform_create(serializer)
+        headers = self.get_success_headers(serializer.data)
+        instance = serializer.instance
+        discipline = instance.discipline
+        discipline_service = DisciplineService(discipline)
+        discipline_service.update_expected_grades()
+        return Response(
+            serializer.data, status=status.HTTP_201_CREATED, headers=headers
+        )
+
+    def update(self, request, *args, **kwargs):
+        partial = kwargs.pop("partial", False)
+        instance = self.get_object()
+        serializer = self.get_serializer(instance, data=request.data, partial=partial)
+        serializer.is_valid(raise_exception=True)
+        self.perform_update(serializer)
+
+        if getattr(instance, "_prefetched_objects_cache", None):
+            instance._prefetched_objects_cache = {}
+
+        discipline = serializer.instance.discipline
+        discipline_service = DisciplineService(discipline)
+        discipline_service.update_expected_grades()
+
+        return Response(serializer.data)
+
+    def destroy(self, request, *args, **kwargs):
+        instance = self.get_object()
+        self.perform_destroy(instance)
+        discipline = instance.discipline
+        discipline_service = DisciplineService(discipline)
+        discipline_service.update_expected_grades()
+        return Response(status=status.HTTP_204_NO_CONTENT)
