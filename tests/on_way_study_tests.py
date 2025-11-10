@@ -9,6 +9,8 @@ from environment import ON_WAY_STUDY_API_KEY_SIGNARURE
 from django.contrib.auth.hashers import make_password, check_password
 from apps.institution.models import Institution
 from apps.course.models import Course
+from apps.discipline.models import Discipline
+
 
 fake = Faker()
 
@@ -81,6 +83,23 @@ def institution_a(created_user):
 def institution_b(authenticated_client_b):
     _, user_b = authenticated_client_b
     return Institution.objects.create(name=fake.company(), user=user_b)
+
+
+@pytest.fixture
+def course_a(institution_a):
+    return Course.objects.create(
+        name="Engenharia de Software",
+        acronym="ES",
+        semesters=10,
+        institution=institution_a,
+    )
+
+
+@pytest.fixture
+def course_b(institution_b):
+    return Course.objects.create(
+        name="Medicina", acronym="MED", semesters=12, institution=institution_b
+    )
 
 
 @pytest.mark.django_db
@@ -419,3 +438,111 @@ class TestCourseAPI:
         assert "non_field_errors" in response_2.data
         assert "code='unique'" in str(response_2.data)
         assert Course.objects.count() == 1
+
+
+@pytest.mark.django_db
+class TestDisciplineAPI:
+
+    def test_create_discipline_unauthenticated_fails(
+        self, api_client, common_headers, course_a
+    ):
+        url = reverse("disciplines-list")
+        data = {
+            "name": "Cálculo 1",
+            "semester": 1,
+            "course": course_a.id,
+        }
+        response = api_client.post(url, data=data, headers=common_headers)
+
+        assert response.status_code == status.HTTP_403_FORBIDDEN
+
+    def test_create_discipline_success(self, authenticated_client, course_a):
+        client, user = authenticated_client
+        url = reverse("disciplines-list")
+
+        data = {
+            "name": "Cálculo 1",
+            "semester": 1,
+            "course": course_a.id,
+        }
+
+        response = client.post(url, data=data)
+
+        assert response.status_code == status.HTTP_201_CREATED
+        assert Discipline.objects.count() == 1
+        discipline = Discipline.objects.first()
+        assert discipline.name == "Cálculo 1"
+        assert discipline.course == course_a
+
+    def test_create_discipline_for_other_user_course_fails(
+        self, authenticated_client, course_b
+    ):
+        client, user_a = authenticated_client
+        url = reverse("disciplines-list")
+
+        data = {
+            "name": "Disciplina Maliciosa",
+            "semester": 1,
+            "course": course_b.id,
+        }
+
+        response = client.post(url, data=data)
+
+        assert response.status_code == status.HTTP_400_BAD_REQUEST
+        assert "course" in response.data
+        assert "does not exist" in str(response.data["course"][0])
+        assert Discipline.objects.count() == 0  # Nenhuma disciplina foi criada
+
+    def test_list_disciplines_returns_only_own(
+        self, authenticated_client, course_a, course_b
+    ):
+        client_a, user_a = authenticated_client
+
+        Discipline.objects.create(name="Disciplina A1", semester=1, course=course_a)
+        Discipline.objects.create(name="Disciplina A2", semester=2, course=course_a)
+
+        Discipline.objects.create(name="Disciplina B1", semester=1, course=course_b)
+
+        assert Discipline.objects.count() == 3
+
+        url = reverse("disciplines-list")
+        response_a = client_a.get(url)
+
+        assert response_a.status_code == status.HTTP_200_OK
+        assert len(response_a.data) == 2
+        assert response_a.data[0]["name"] == "Disciplina A1"
+        assert response_a.data[1]["name"] == "Disciplina A2"
+
+    def test_retrieve_other_user_discipline_fails(self, authenticated_client, course_b):
+        client_a, user_a = authenticated_client
+
+        discipline_b = Discipline.objects.create(
+            name="Disciplina B1", semester=1, course=course_b
+        )
+
+        url = reverse("disciplines-detail", kwargs={"id": discipline_b.id})
+        response_a = client_a.get(url)
+
+        assert response_a.status_code == status.HTTP_404_NOT_FOUND
+
+    def test_create_duplicate_discipline_name_same_course_fails(
+        self, authenticated_client, course_a
+    ):
+        client, user = authenticated_client
+        url = reverse("disciplines-list")
+
+        data = {
+            "name": "Disciplina Duplicada",
+            "semester": 3,
+            "course": course_a.id,
+        }
+
+        response_1 = client.post(url, data=data)
+        assert response_1.status_code == status.HTTP_201_CREATED
+
+        response_2 = client.post(url, data=data)
+
+        assert response_2.status_code == status.HTTP_400_BAD_REQUEST
+        assert "non_field_errors" in response_2.data
+        assert "code='unique'" in str(response_2.data)
+        assert Discipline.objects.count() == 1
