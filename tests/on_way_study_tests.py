@@ -8,6 +8,7 @@ from apps.user.models import User
 from environment import ON_WAY_STUDY_API_KEY_SIGNARURE
 from django.contrib.auth.hashers import make_password, check_password
 from apps.institution.models import Institution
+from apps.course.models import Course
 
 fake = Faker()
 
@@ -68,6 +69,18 @@ def authenticated_client_b(api_client, common_headers, user_data):
     client_b.defaults.update(common_headers)
 
     return client_b, user_b
+
+
+@pytest.fixture
+def institution_a(created_user):
+    user, _ = created_user
+    return Institution.objects.create(name=fake.company(), user=user)
+
+
+@pytest.fixture
+def institution_b(authenticated_client_b):
+    _, user_b = authenticated_client_b
+    return Institution.objects.create(name=fake.company(), user=user_b)
 
 
 @pytest.mark.django_db
@@ -286,3 +299,123 @@ class TestInstitutionAPI:
         response_a = client_a.get(url)
 
         assert response_a.status_code == status.HTTP_404_NOT_FOUND
+
+
+@pytest.mark.django_db
+class TestCourseAPI:
+    def test_create_course_unauthenticated_fails(
+        self, api_client, common_headers, institution_a
+    ):
+        url = reverse("courses-list")
+        data = {
+            "name": "Engenharia de Software",
+            "acronym": "ES",
+            "semesters": 10,
+            "institution": institution_a.id,
+        }
+        response = api_client.post(url, data=data, headers=common_headers)
+
+        assert response.status_code == status.HTTP_403_FORBIDDEN
+
+    def test_create_course_success(self, authenticated_client, institution_a):
+
+        client, user = authenticated_client
+        url = reverse("courses-list")
+
+        data = {
+            "name": "Engenharia de Software",
+            "acronym": "ES",
+            "semesters": 10,
+            "institution": institution_a.id,
+        }
+
+        response = client.post(url, data=data)
+
+        assert response.status_code == status.HTTP_201_CREATED
+        assert Course.objects.count() == 1
+        course = Course.objects.first()
+        assert course.name == "Engenharia de Software"
+        assert course.institution == institution_a
+
+    def test_create_course_for_other_user_institution_fails(
+        self, authenticated_client, institution_b
+    ):
+        client, user_a = authenticated_client
+        url = reverse("courses-list")
+
+        data = {
+            "name": "Curso Malicioso",
+            "acronym": "MAL",
+            "semesters": 1,
+            "institution": institution_b.id,
+        }
+
+        response = client.post(url, data=data)
+
+        assert response.status_code == status.HTTP_400_BAD_REQUEST
+        assert "institution" in response.data
+        assert "does not exist" in str(response.data["institution"][0])
+        assert Course.objects.count() == 0
+
+    def test_list_courses_returns_only_own(
+        self, authenticated_client, authenticated_client_b, institution_a, institution_b
+    ):
+        client_a, user_a = authenticated_client
+
+        Course.objects.create(
+            name="Curso A1", acronym="A1", semesters=1, institution=institution_a
+        )
+        Course.objects.create(
+            name="Curso A2", acronym="A2", semesters=1, institution=institution_a
+        )
+
+        Course.objects.create(
+            name="Curso B1", acronym="B1", semesters=1, institution=institution_b
+        )
+
+        assert Course.objects.count() == 3
+
+        url = reverse("courses-list")
+        response_a = client_a.get(url)
+
+        assert response_a.status_code == status.HTTP_200_OK
+        assert len(response_a.data) == 2
+        assert response_a.data[0]["name"] == "Curso A1"
+        assert response_a.data[1]["name"] == "Curso A2"
+
+    def test_retrieve_other_user_course_fails(
+        self, authenticated_client, institution_b
+    ):
+        client_a, user_a = authenticated_client
+
+        course_b = Course.objects.create(
+            name="Curso B1", acronym="B1", semesters=1, institution=institution_b
+        )
+
+        url = reverse("courses-detail", kwargs={"id": course_b.id})
+        response_a = client_a.get(url)
+
+        assert response_a.status_code == status.HTTP_404_NOT_FOUND
+
+    def test_create_duplicate_course_name_same_institution_fails(
+        self, authenticated_client, institution_a
+    ):
+        client, user = authenticated_client
+        url = reverse("courses-list")
+
+        data = {
+            "name": "Curso Duplicado",
+            "acronym": "CD",
+            "semesters": 2,
+            "institution": institution_a.id,
+        }
+
+        response_1 = client.post(url, data=data)
+        assert response_1.status_code == status.HTTP_201_CREATED
+
+        response_2 = client.post(url, data=data)
+
+        assert response_2.status_code == status.HTTP_400_BAD_REQUEST
+        assert "non_field_errors" in response_2.data
+        assert "code='unique'" in str(response_2.data)
+        assert Course.objects.count() == 1
