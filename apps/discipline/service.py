@@ -50,7 +50,8 @@ class DisciplineService:
         points_to_achieve = self.TOTAL_POINTS_NEEDED - total_points_achieved
         expected_grade = self.MIN_GRADE
 
-        if points_to_achieve > self.MIN_GRADE:
+        if points_to_achieve > self.MIN_GRADE and pending_weight > 0:
+
             expected_grade = (points_to_achieve / pending_weight).quantize(
                 Decimal("0.01"), rounding=ROUND_HALF_UP
             )

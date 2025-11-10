@@ -61,8 +61,7 @@ class TestDisciplineService:
 
         service = DisciplineService(discipline)
 
-        with not pytest.raises(DivisionByZero):
-            service.update_expected_grades()
+        service.update_expected_grades()
 
     def test_no_activities(self, discipline):
         service = DisciplineService(discipline)
