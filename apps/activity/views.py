@@ -56,6 +56,9 @@ class ActivityViewSet(
     def update(self, request, *args, **kwargs):
         partial = kwargs.pop("partial", False)
         instance = self.get_object()
+
+        old_discipline = instance.discipline
+
         serializer = self.get_serializer(instance, data=request.data, partial=partial)
         serializer.is_valid(raise_exception=True)
         self.perform_update(serializer)
@@ -63,9 +66,14 @@ class ActivityViewSet(
         if getattr(instance, "_prefetched_objects_cache", None):
             instance._prefetched_objects_cache = {}
 
-        discipline = serializer.instance.discipline
-        discipline_service = DisciplineService(discipline)
-        discipline_service.update_expected_grades()
+        new_discipline = serializer.instance.discipline
+
+        new_discipline_service = DisciplineService(new_discipline)
+        new_discipline_service.update_expected_grades()
+
+        if old_discipline != new_discipline:
+            old_discipline_service = DisciplineService(old_discipline)
+            old_discipline_service.update_expected_grades()
 
         return Response(serializer.data)
 
