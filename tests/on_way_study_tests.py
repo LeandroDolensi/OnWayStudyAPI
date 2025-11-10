@@ -10,6 +10,10 @@ from django.contrib.auth.hashers import make_password, check_password
 from apps.institution.models import Institution
 from apps.course.models import Course
 from apps.discipline.models import Discipline
+from apps.activity.models import Activity
+from apps.discipline.service import DisciplineService
+import datetime
+from django.utils import timezone
 
 
 fake = Faker()
@@ -100,6 +104,26 @@ def course_b(institution_b):
     return Course.objects.create(
         name="Medicina", acronym="MED", semesters=12, institution=institution_b
     )
+
+
+@pytest.fixture
+def discipline_a(course_a):
+    return Discipline.objects.create(name="Cálculo 1", semester=1, course=course_a)
+
+
+@pytest.fixture
+def discipline_b(course_b):
+    return Discipline.objects.create(name="Anatomia", semester=1, course=course_b)
+
+
+@pytest.fixture
+def activity_data(discipline_a):
+    return {
+        "name": "Prova 1",
+        "grade_weight": "3.00",
+        "delivery_date": timezone.now() + datetime.timedelta(days=30),
+        "discipline": discipline_a.id,
+    }
 
 
 @pytest.mark.django_db
@@ -546,3 +570,96 @@ class TestDisciplineAPI:
         assert "non_field_errors" in response_2.data
         assert "code='unique'" in str(response_2.data)
         assert Discipline.objects.count() == 1
+
+
+@pytest.mark.django_db
+class TestActivityAPI:
+    def test_create_activity_unauthenticated_fails(
+        self, api_client, common_headers, activity_data
+    ):
+        url = reverse("activities-list")
+        response = api_client.post(url, data=activity_data, headers=common_headers)
+
+        assert response.status_code == status.HTTP_403_FORBIDDEN
+
+    def test_create_activity_success(
+        self, authenticated_client, discipline_a, activity_data, mocker
+    ):
+        mock_service_instance = mocker.Mock()
+        mock_service_class = mocker.patch(
+            "apps.activity.views.DisciplineService",
+            autospec=True,
+            return_value=mock_service_instance,
+        )
+
+        client, user = authenticated_client
+        url = reverse("activities-list")
+
+        response = client.post(url, data=activity_data)
+
+        assert response.status_code == status.HTTP_201_CREATED
+        assert Activity.objects.count() == 1
+        activity = Activity.objects.first()
+        assert activity.name == activity_data["name"]
+        assert activity.discipline == discipline_a
+
+        mock_service_class.assert_called_once_with(discipline_a)
+        mock_service_instance.update_expected_grades.assert_called_once()
+
+    def test_create_activity_for_other_user_discipline_fails(
+        self, authenticated_client, discipline_b, activity_data
+    ):
+        client, user_a = authenticated_client
+        url = reverse("activities-list")
+
+        data = activity_data
+        data["discipline"] = discipline_b.id
+
+        response = client.post(url, data=data)
+
+        assert response.status_code == status.HTTP_400_BAD_REQUEST
+        assert "discipline" in response.data
+        assert "does not exist" in str(response.data["discipline"][0])
+        assert Activity.objects.count() == 0  # Nenhuma atividade foi criada
+
+    def test_list_activities_returns_only_own(
+        self, authenticated_client, discipline_a, discipline_b
+    ):
+        client_a, user_a = authenticated_client
+        date = timezone.now() + datetime.timedelta(days=10)
+
+        Activity.objects.create(
+            name="Atividade A1", delivery_date=date, discipline=discipline_a
+        )
+        Activity.objects.create(
+            name="Atividade A2", delivery_date=date, discipline=discipline_a
+        )
+
+        Activity.objects.create(
+            name="Atividade B1", delivery_date=date, discipline=discipline_b
+        )
+
+        assert Activity.objects.count() == 3
+
+        url = reverse("activities-list")
+        response_a = client_a.get(url)
+
+        assert response_a.status_code == status.HTTP_200_OK
+        assert len(response_a.data) == 2
+        assert response_a.data[0]["name"] == "Atividade A1"
+        assert response_a.data[1]["name"] == "Atividade A2"
+
+    def test_retrieve_other_user_activity_fails(
+        self, authenticated_client, discipline_b
+    ):
+        client_a, user_a = authenticated_client
+        date = timezone.now() + datetime.timedelta(days=10)
+
+        activity_b = Activity.objects.create(
+            name="Atividade B1", delivery_date=date, discipline=discipline_b
+        )
+
+        url = reverse("activities-detail", kwargs={"id": activity_b.id})
+        response_a = client_a.get(url)
+
+        assert response_a.status_code == status.HTTP_404_NOT_FOUND
