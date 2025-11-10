@@ -663,3 +663,37 @@ class TestActivityAPI:
         response_a = client_a.get(url)
 
         assert response_a.status_code == status.HTTP_404_NOT_FOUND
+
+    def test_update_activity_to_new_discipline_fails_to_recalculate_old_discipline(
+        self, authenticated_client, discipline_a, mocker
+    ):
+        client, user = authenticated_client
+        date = timezone.now() + datetime.timedelta(days=10)
+
+        discipline_b_for_user_a = Discipline.objects.create(
+            name="Programação 1", semester=1, course=discipline_a.course
+        )
+
+        activity = Activity.objects.create(
+            name="Atividade para Mover", delivery_date=date, discipline=discipline_a
+        )
+
+        mock_service_instance = mocker.Mock()
+        mock_service_class = mocker.patch(
+            "apps.activity.views.DisciplineService",
+            autospec=True,
+            return_value=mock_service_instance,
+        )
+
+        url = reverse("activities-detail", kwargs={"id": activity.id})
+        response = client.patch(url, data={"discipline": discipline_b_for_user_a.id})
+
+        assert response.status_code == status.HTTP_200_OK
+
+        assert (
+            mock_service_class.call_count == 2
+        ), "O serviço não foi chamado para a disciplina ANTIGA e para a NOVA"
+
+        mock_service_class.assert_any_call(discipline_a)
+        mock_service_class.assert_any_call(discipline_b_for_user_a)
+        assert mock_service_instance.update_expected_grades.call_count == 2
