@@ -40,6 +40,7 @@ class CourseDisciplineSerializer(ModelSerializer):
             "name",
             "extra_information",
             "semester",
+            "status",
             "final_grade",
             "final_result",
             "created_at",
