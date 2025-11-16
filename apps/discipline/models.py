@@ -5,6 +5,24 @@ from environment import get_timezone
 
 
 class Discipline(models.Model, PermissionBaseModel):
+    """
+    Represents an academic discipline within a course.
+
+    A discipline has a name, semester, status, and is associated with a course.
+    It can also have a final grade and result.
+
+    Attributes:
+        name (str): The name of the discipline.
+        extra_information (str): Additional information about the discipline.
+        semester (int): The semester in which the discipline is taught.
+        status (str): The current status of the discipline (e.g., 'In Progress', 'Completed').
+        final_grade (Decimal): The final grade in the discipline.
+        final_result (str): The final result (e.g., 'Approved', 'Failed').
+        course (Course): The course to which the discipline belongs.
+        created_at (datetime): The timestamp when the discipline was created.
+        updated_at (datetime): The timestamp when the discipline was last updated.
+    """
+
     class FinalStatusChoices(models.TextChoices):
         FAILED = "FAILED", "Failed"
         RECOVERY = "RECOVERY", "Recovery"
@@ -48,10 +66,29 @@ class Discipline(models.Model, PermissionBaseModel):
         ]
 
     def __str__(self):
+        """
+        Returns a string representation of the discipline.
+
+        Returns:
+            str: A string in the format "Course Acronym: Discipline Name".
+        """
         return f"{self.course.acronym}: {self.name}"
 
 
 class PrerequisiteDiscipline(models.Model):
+    """
+    Represents the prerequisite relationship between two disciplines.
+
+    This model defines a directional link where one discipline (the main_discipline)
+    has another discipline (the prerequisite) as a requirement.
+
+    Attributes:
+        main_discipline (Discipline): The discipline that has a prerequisite.
+        prerequisite (Discipline): The discipline that is a prerequisite.
+        created_at (datetime): The timestamp when the relationship was created.
+        updated_at (datetime): The timestamp when the relationship was last updated.
+    """
+
     main_discipline = models.ForeignKey(
         Discipline, on_delete=models.CASCADE, related_name="prerequisites"
     )
@@ -72,4 +109,10 @@ class PrerequisiteDiscipline(models.Model):
         ]
 
     def __str__(self):
+        """
+        Returns a string representation of the prerequisite relationship.
+
+        Returns:
+            str: A string in the format "Prerequisite Name -> Main Discipline Name".
+        """
         return f"{self.prerequisite.name} -> {self.main_discipline.name}"

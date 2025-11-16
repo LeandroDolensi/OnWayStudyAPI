@@ -5,6 +5,21 @@ from environment import get_timezone
 
 
 class Course(models.Model, PermissionBaseModel):
+    """
+    Represents an academic course within an institution.
+
+    A course has a name, an acronym, a number of semesters, and is associated
+    with an institution.
+
+    Attributes:
+        name (str): The name of the course.
+        acronym (str): The acronym for the course.
+        semesters (int): The total number of semesters in the course.
+        institution (Institution): The institution to which the course belongs.
+        created_at (datetime): The timestamp when the course was created.
+        updated_at (datetime): The timestamp when the course was last updated.
+    """
+
     name = models.CharField(max_length=200)
     acronym = models.CharField(max_length=10)
     semesters = models.PositiveIntegerField()
@@ -27,4 +42,10 @@ class Course(models.Model, PermissionBaseModel):
         ]
 
     def __str__(self):
+        """
+        Returns a string representation of the course.
+
+        Returns:
+            str: A string in the format "Course Name (ACRONYM)".
+        """
         return f"{self.name} ({self.acronym})"

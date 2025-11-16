@@ -9,6 +9,14 @@ from environment import get_timezone
 
 
 class UserSerializer(serializers.ModelSerializer):
+    """
+    Serializer for the User model.
+
+    This serializer handles the serialization and deserialization of User
+    instances, including password hashing, nickname validation, and suggesting
+    alternative nicknames if the chosen one is taken.
+    """
+
     institutions = UserInstitutionSerializer(many=True, read_only=True)
 
     class Meta:
@@ -30,12 +38,35 @@ class UserSerializer(serializers.ModelSerializer):
         }
 
     def create(self, validated_data):
+        """
+        Creates a new User instance.
+
+        This method validates the nickname and password before creating the user.
+
+        Args:
+            validated_data (dict): The validated data for the new user.
+
+        Returns:
+            User: The newly created User instance.
+        """
         self._validate_nickname(validated_data)
         self._validate_password(validated_data)
 
         return self.Meta.model.objects.create(**validated_data)
 
     def update(self, instance, validated_data):
+        """
+        Updates an existing User instance.
+
+        This method handles password hashing and nickname validation if they are updated.
+
+        Args:
+            instance (User): The existing User instance.
+            validated_data (dict): The validated data for the update.
+
+        Returns:
+            User: The updated User instance.
+        """
         if "password" in validated_data:
             validated_data["password"] = make_password(validated_data.get("password"))
 

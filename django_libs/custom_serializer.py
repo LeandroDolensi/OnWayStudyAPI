@@ -4,8 +4,17 @@ from apps.user.models import User
 
 
 class CustomModelSerializer(ModelSerializer):
+    """
+    A custom base serializer that provides a helper method to get the current user.
+
+    This serializer is intended to be used as a base class for other serializers
+    that need to access the user from the request context.
+    """
 
     def __init__(self, *args, **kwargs):
+        """
+        Initializes the CustomModelSerializer.
+        """
         super().__init__(*args, **kwargs)
 
     def _get_user(self) -> User:
